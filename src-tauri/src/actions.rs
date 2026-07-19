@@ -678,15 +678,28 @@ impl ShortcutAction for TranscribeAction {
                     utils::hide_recording_overlay(&ah);
                     change_tray_icon(&ah, TrayIconState::Idle);
                 } else {
-                    // Save WAV concurrently with transcription
+                    // Save WAV concurrently with transcription. When save_recordings
+                    // is off (the default) no audio ever touches the disk: history
+                    // keeps the transcript only.
+                    let save_audio = crate::settings::get_settings(&ah).save_recordings;
                     let sample_count = samples.len();
-                    let file_name = format!("handy-{}.wav", chrono::Utc::now().timestamp());
-                    let wav_path = hm.recordings_dir().join(&file_name);
-                    let wav_path_for_verify = wav_path.clone();
-                    let samples_for_wav = samples.clone();
-                    let wav_handle = tauri::async_runtime::spawn_blocking(move || {
-                        crate::audio_toolkit::save_wav_file(&wav_path, &samples_for_wav)
-                    });
+                    let file_name = if save_audio {
+                        format!("handy-{}.wav", chrono::Utc::now().timestamp())
+                    } else {
+                        String::new()
+                    };
+                    let wav_handle = if save_audio {
+                        let wav_path = hm.recordings_dir().join(&file_name);
+                        let samples_for_wav = samples.clone();
+                        Some((
+                            wav_path.clone(),
+                            tauri::async_runtime::spawn_blocking(move || {
+                                crate::audio_toolkit::save_wav_file(&wav_path, &samples_for_wav)
+                            }),
+                        ))
+                    } else {
+                        None
+                    };
 
                     // Transcribe concurrently with WAV save. If a live stream was
                     // running, finalize it and use its text (all audio was already
@@ -704,28 +717,31 @@ impl ShortcutAction for TranscribeAction {
                         Err(err) => Err(err),
                     };
 
-                    // Await WAV save and verify
-                    let wav_saved = match wav_handle.await {
-                        Ok(Ok(())) => {
-                            match crate::audio_toolkit::verify_wav_file(
-                                &wav_path_for_verify,
-                                sample_count,
-                            ) {
-                                Ok(()) => true,
-                                Err(e) => {
-                                    error!("WAV verification failed: {}", e);
-                                    false
+                    // Await WAV save and verify (only when audio persistence is on)
+                    let wav_saved = match wav_handle {
+                        None => false,
+                        Some((wav_path_for_verify, handle)) => match handle.await {
+                            Ok(Ok(())) => {
+                                match crate::audio_toolkit::verify_wav_file(
+                                    &wav_path_for_verify,
+                                    sample_count,
+                                ) {
+                                    Ok(()) => true,
+                                    Err(e) => {
+                                        error!("WAV verification failed: {}", e);
+                                        false
+                                    }
                                 }
                             }
-                        }
-                        Ok(Err(e)) => {
-                            error!("Failed to save WAV file: {}", e);
-                            false
-                        }
-                        Err(e) => {
-                            error!("WAV save task panicked: {}", e);
-                            false
-                        }
+                            Ok(Err(e)) => {
+                                error!("Failed to save WAV file: {}", e);
+                                false
+                            }
+                            Err(e) => {
+                                error!("WAV save task panicked: {}", e);
+                                false
+                            }
+                        },
                     };
 
                     if rm.was_cancelled_since(cancel_generation) {
@@ -769,8 +785,9 @@ impl ShortcutAction for TranscribeAction {
                                 return;
                             }
 
-                            // Save to history if WAV was saved
-                            if wav_saved {
+                            // Save to history: always keep the transcript; the
+                            // audio file only exists when save_recordings is on.
+                            if wav_saved || !save_audio {
                                 if let Err(err) = hm.save_entry(
                                     file_name,
                                     transcription,

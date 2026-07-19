@@ -173,37 +173,55 @@ const RecordingOverlay: React.FC = () => {
         <path
           d="M4 4 L12 12 M12 4 L4 12"
           stroke="currentColor"
-          strokeWidth="1.6"
+          strokeWidth="1.8"
           strokeLinecap="round"
         />
       </svg>
     </button>
   );
 
-  // dot (left) | waveform (center) | timer + cancel (right) — same structure for
-  // pill & panel, so the Live morph is a pure width change.
-  const listeningRow = (showTimer: boolean, showCancel: boolean) => (
+  const confirmBtn = (
+    <button
+      className="sok"
+      aria-label="validate"
+      onClick={() => commands.finishOperation()}
+    >
+      <svg viewBox="0 0 16 16" aria-hidden="true">
+        <path
+          d="M3.5 8.5 L6.5 11.5 L12.5 4.5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </button>
+  );
+
+  // cancel X (left) | waveform (center) | timer + validate check (right) — same
+  // structure for pill & panel, so the Live morph is a pure width change.
+  const listeningRow = (showTimer: boolean) => (
     <div className="sbase">
-      <div className="sbase-l">
-        <span className="sdot" />
-      </div>
+      <div className="sbase-l">{cancelBtn}</div>
       {waveform}
       <div className="sbase-r">
         {showTimer && <span className="stimer">{fmtTime(elapsed)}</span>}
-        {showCancel && cancelBtn}
+        {confirmBtn}
       </div>
     </div>
   );
 
-  // spinner (left) | label (center) | cancel (right) — same 3-zone grid as the
-  // listening row, so the label is centered.
-  const workingRow = (label: string, showCancel: boolean) => (
+  // cancel X (left) | spinner + label (center) — same 3-zone grid as the
+  // listening row, so the label is centered. Nothing to validate while working.
+  const workingRow = (label: string) => (
     <div className="sbase">
-      <div className="sbase-l">
+      <div className="sbase-l">{cancelBtn}</div>
+      <span className="swork-label">
         <span className="sspinner" />
-      </div>
-      <span className="swork-label">{label}</span>
-      <div className="sbase-r">{showCancel && cancelBtn}</div>
+        {label}
+      </span>
+      <div className="sbase-r" />
     </div>
   );
 
@@ -251,9 +269,8 @@ const RecordingOverlay: React.FC = () => {
                 workKind === "polishing"
                   ? t("overlay.processing")
                   : t("overlay.transcribing"),
-                true,
               )
-            : listeningRow(open, true)}
+            : listeningRow(open)}
         </div>
       </div>
     );
@@ -276,7 +293,7 @@ const RecordingOverlay: React.FC = () => {
       <div
         className={`scard compact ${working && isVisible ? "cworking" : ""}`}
       >
-        {working ? workingRow(workLabel, true) : listeningRow(false, true)}
+        {working ? workingRow(workLabel) : listeningRow(false)}
       </div>
     </div>
   );

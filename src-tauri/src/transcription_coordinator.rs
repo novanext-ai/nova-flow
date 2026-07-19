@@ -34,6 +34,9 @@ enum Command {
     Cancel {
         recording_was_active: bool,
     },
+    /// Finish the active recording as if the user had released/toggled the
+    /// shortcut: stop, transcribe and paste. No-op outside Stage::Recording.
+    Finish,
     ProcessingFinished,
 }
 
@@ -199,6 +202,13 @@ impl TranscriptionCoordinator {
                                 stage = Stage::Idle;
                             }
                         }
+                        Command::Finish => {
+                            pending_release = None;
+                            if let Stage::Recording(id) = &stage {
+                                let id = id.clone();
+                                stop(&app, &mut stage, &id, "");
+                            }
+                        }
                         Command::ProcessingFinished => {
                             stage = Stage::Idle;
                         }
@@ -245,6 +255,13 @@ impl TranscriptionCoordinator {
             })
             .is_err()
         {
+            warn!("Transcription coordinator channel closed");
+        }
+    }
+
+    /// Finish the active recording (validate button on the overlay).
+    pub fn finish(&self) {
+        if self.tx.send(Command::Finish).is_err() {
             warn!("Transcription coordinator channel closed");
         }
     }
