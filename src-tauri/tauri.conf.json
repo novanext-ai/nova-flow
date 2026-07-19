@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Handy",
-  "version": "0.9.3",
-  "identifier": "com.pais.handy",
+  "productName": "Nova Flow",
+  "version": "1.0.0",
+  "identifier": "ai.novanext.novaflow",
   "build": {
     "beforeDevCommand": "bun run dev",
     "devUrl": "http://localhost:1420",
@@ -17,7 +17,9 @@
       "assetProtocol": {
         "enable": true,
         "scope": {
-          "allow": ["**"],
+          "allow": [
+            "**"
+          ],
           "requireLiteralLeadingDot": false
         }
       }
@@ -27,7 +29,9 @@
     "active": true,
     "createUpdaterArtifacts": true,
     "targets": "all",
-    "resources": ["resources/**/*"],
+    "resources": [
+      "resources/**/*"
+    ],
     "license": "MIT",
     "icon": [
       "icons/32x32.png",
@@ -45,7 +49,10 @@
     },
     "linux": {
       "deb": {
-        "depends": ["libgtk-layer-shell0", "libopenblas0"],
+        "depends": [
+          "libgtk-layer-shell0",
+          "libopenblas0"
+        ],
         "files": {
           "/usr/lib": "transcribe-libs"
         }
@@ -70,7 +77,6 @@
       }
     },
     "windows": {
-      "signCommand": "trusted-signing-cli -e https://eus.codesigning.azure.net/ -a CJ-Signing -c cjpais-dev -d Handy %1",
       "nsis": {
         "template": "nsis/installer.nsi"
       }
@@ -78,9 +84,9 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEJBQjcyMDk1MjA2NjAxRjkKUldUNUFXWWdsU0MzdXRRZi8zYzhqV2FaNUVDbDd2Rk5VM1IvWWowVXdmRFNKQ1BrMXF5RFFsLy8K",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDgwNzdGM0ZCRkMxNzFERjcKUldUM0hSZjgrL04zZ0J3QlA3b1B2aUVoQmpDckZ5VDFvWDZiNWRwcGRRTm9nNmN5Z0tDUnBPOVcK",
       "endpoints": [
-        "https://github.com/cjpais/Handy/releases/latest/download/latest.json"
+        "https://github.com/novanext-ai/nova-flow/releases/latest/download/latest.json"
       ]
     }
   }
