@@ -31,6 +31,14 @@ xattr -dr com.apple.quarantine "/Applications/Nova Flow.app"
 
 Accorde ensuite les permissions **Microphone** et **Accessibilité** demandées (nécessaires pour dicter et coller le texte).
 
+**Après une mise à jour, l'Accessibilité reste sur « En attente » ?** C'est macOS qui lie l'autorisation à l'empreinte exacte du binaire (app non notarisée). Corrige en 20 secondes :
+
+```bash
+tccutil reset Accessibility ai.novanext.novaflow
+```
+
+puis relance Nova Flow et ré-accorde l'accès. Équivalent manuel : Réglages Système → Confidentialité et sécurité → Accessibilité → retirer Nova Flow (bouton −) → relancer l'app → ré-accorder.
+
 ### Compiler depuis les sources
 
 Prérequis : [Rust](https://rustup.rs/) (stable), [Bun](https://bun.sh/), et sous macOS les Xcode Command Line Tools.
